@@ -15,14 +15,18 @@
 ## Methodology 
 
   1.	SQL query that extracts, cleans, and transforms the data from the database.
+    
   2.	A cluster analysis using Python that uses salesperson base metrics to create clusters.
+     
   3.	A dashboard in Power BI that ranks and tracks the contribution of each location/product category for each salesperson and campaign performance.
 
 ## Skills
 
-  1.	SQL: CTEs, Joins, Case, Window functions, Aggregate functions
-  2.	Power BI: Translation Dax from SQL, writing functions, ETL, calculated columns, data visualization, data modeling
-  3.	Python: Cluster Analysis (StandardScaler, KMeans)
+  SQL: CTEs, Joins, Case, Window functions, Aggregate functions
+  
+  Power BI: Translation Dax from SQL, writing functions, ETL, calculated columns, data visualization, data modeling
+  
+  Python: Cluster Analysis (StandardScaler, KMeans)
 
 ## Results and Business Recommendation
 
