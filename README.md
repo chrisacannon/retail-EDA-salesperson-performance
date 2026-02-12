@@ -24,13 +24,17 @@
 
   SQL: CTEs, Joins, Case, Window functions, Aggregate functions
   
-  Power BI: Translation Dax from SQL, writing functions, ETL, calculated columns, data visualization, data modeling
+  Power BI: Translation to Dax from SQL, writing functions, ETL, calculated columns, data visualization, data modeling
   
   Python: Cluster Analysis (StandardScaler, KMeans)
 
 ### Results and Business Recommendation
 
-  Cluster analysis of shows that salespeople are all generalists and there is no meaningful intention to specialize in areas (location, product category, etc.) where they have more success. Most salespeople perform best in their top 1-2 categories (ex. The top salesperson Nicole Simpson had 13.8% more sales in Groceries than her next highest category Clothing). Building a dashboard including sales distribution for things like location, product category, and campaign allows the company to adjust goals and redirect leads for salespeople in real-time. Given this insight, I recommend:
+  Cluster analysis of shows that salespeople are all generalists and there is no meaningful intention to specialize in areas (location, product category, etc.) where they have more success. Most salespeople perform best in their top 1-2 categories (ex. The top salesperson Nicole Simpson had 13.8% more sales in Groceries than her next highest category Clothing).
+  
+![Salesperson Dashboard](images/salesperson_dashboard_screenshot_top_sp.png)
+  
+  Building a dashboard including sales distribution for things like location, product category, and campaign allows the company to adjust goals and redirect leads for salespeople in real-time. Given this insight, I recommend:
 
   1.	At the end of each quarter, consult the dashboard and adjust individual sales goals for areas of strongest performance.
   2.	Construct teams of salespeople with similar strengths to create specialist clusters via periodic cluster analyses. With product category-based teams, the burden of product knowledge is lightened by focusing on fewer products; with location-based teams, building customer relationships is simpler.
