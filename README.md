@@ -40,3 +40,5 @@
 
   1.	Examine salesperson hierarchy and incentive structure to retain top performing salespeople.
   2.	Assess the competitive landscape of highest-grossing locations to decide the best areas to expand.
+
+Dataset Link: https://www.kaggle.com/datasets/shrinivasv/retail-store-star-schema-dataset
