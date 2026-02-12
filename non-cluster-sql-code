@@ -1,0 +1,96 @@
+-- Salesperson Ranking by Revenue
+with sp_rev_calc as (
+select
+    salesperson_sk,
+    round(sum(total_amount)) as sp_rev_total
+from
+    fact_sales_normalized sales
+group by
+    1
+)
+select
+    salesperson_id,
+    salesperson_name,
+    salesperson_role,
+    sp_rev_total,
+    row_number() over(order by sp_rev_total desc) as sp_rank
+from 
+    sp_rev_calc rev
+join
+    dim_salespersons sp
+    on rev.salesperson_sk = sp.salesperson_sk
+order by
+    5
+
+-- Salesperson Revenue Range
+with sp_rank as (
+select
+    salesperson_sk,
+    round(sum(total_amount)) as sp_rev_total
+from
+    fact_sales_normalized
+group by
+    1
+order by
+    2 desc
+)
+select
+    max(sp_rev_total),
+    min(sp_rev_total),
+    max(sp_rev_total) - min(sp_rev_total) as sp_rev_gap
+from
+    sp_rank
+
+-- SP Performance by Category
+select
+    category,
+    count(sales_sk) as num_sales,
+    round(sum(total_amount)) as category_rev,
+    lead(category_rev,1) over(order by category_rev desc) as next_highest_cat,
+    round(category_rev / next_highest_cat - 1, 3) as perc_over_next_highest_cat,
+    row_number() over(order by round(sum(total_amount)) desc) as cat_rank
+from 
+    fact_sales_normalized sa
+join
+    dim_products prod
+    on sa.product_sk = prod.product_sk
+where
+    salesperson_sk = 1934
+group by
+    1
+
+-- SP Performance by Location
+select
+    store_location,
+    count(sales_sk) as num_sales,
+    round(sum(total_amount)) as location_rev,
+    lead(location_rev,1) over(order by location_rev desc) as next_highest_loc,
+    round(location_rev / next_highest_loc - 1, 3) as perc_over_next_highest_loc,
+    row_number() over(order by round(sum(total_amount)) desc) as loc_rank
+from 
+    fact_sales_normalized sa
+join
+    dim_stores st
+    on sa.store_sk = st.store_sk
+where
+    salesperson_sk = 1934
+group by
+    1
+
+-- SP Performance by Campaign
+select
+    campaign_name,
+    count(sales_sk) as num_sales,
+    round(sum(total_amount)) as campaign_rev,
+    lead(campaign_rev,1) over(order by campaign_rev desc) as next_highest_campaign,
+    round(campaign_rev / next_highest_campaign - 1, 3) as perc_over_next_highest_campaign,
+    row_number() over(order by round(sum(total_amount)) desc) as campaign_rank
+from 
+    fact_sales_normalized sa
+join
+    dim_campaigns ca
+    on sa.campaign_sk = ca.campaign_sk
+where
+    salesperson_sk = 1934
+group by
+    1
