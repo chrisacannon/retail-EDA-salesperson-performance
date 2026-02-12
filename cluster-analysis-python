@@ -1,0 +1,207 @@
+/* Cluster Analysis Explanation
+
+Step 1: Create pivot features in SQL - for each salesperson, calculate:
+
+  1. Category mix: % of their sales in each product category (e.g., 30% Electronics, 20% Clothing, etc.)
+  2. Location mix: % of their sales in each location
+  3. Campaign mix: % of their sales in each campaign
+  4. Total sales
+  5. Unique customers
+  6. Average revenue per sale
+  7. Total revenue
+
+Step 2: Standardize - scale features so high-volume categories don't dominate
+
+Step 3: Cluster - use K-means or hierarchical clustering
+
+Step 4: Profile clusters - identify what makes each cluster unique */
+
+-- The Code:
+
+-- Step 1: Create pivot features
+
+-- This SQL query pulls Salesperson Base Metrics
+select
+    sp.salesperson_id,
+    sp.salesperson_name,
+    sp.salesperson_role,
+    count(distinct sales.sales_id) as total_sales,
+    count(distinct sales.customer_sk) as unique_customers,
+    round(avg(sales.total_amount), 2) as avg_revenue_per_sale,
+    sum(sales.total_amount) as total_revenue,
+    count(distinct p.category) as num_categories,
+    count(distinct st.store_location) as num_locations,
+    count(distinct cam.campaign_name) as num_campaigns
+from
+    fact_sales_normalized sales
+join
+    dim_salespersons sp
+    on sales.salesperson_sk = sp.salesperson_sk
+join
+    dim_products p 
+    on sales.product_sk = p.product_sk
+join
+    dim_stores st
+    on sales.store_sk = st.store_sk
+join
+    dim_campaigns cam 
+    on sales.campaign_sk = cam.campaign_sk
+group by
+    1, 2, 3
+
+-- This SQL query pulls Salesperson by Category
+select
+    sp.salesperson_id,
+    p.category,
+    count(*) as category_sales,
+    sum(total_amount) as category_revenue
+from
+    fact_sales_normalized sales
+join
+    dim_salespersons sp 
+    on sales.salesperson_sk = sp.salesperson_sk
+join
+    dim_products p 
+    on sales.product_sk = p.product_sk
+group by
+    1, 2
+
+-- This SQL query pulls Salesperson by Location
+select
+    sp.salesperson_id,
+    st.store_location,
+    count(*) as location_sales,
+    sum(total_amount) as location_revenue
+from
+    fact_sales_normalized sales
+join
+    dim_salespersons sp 
+    on sales.salesperson_sk = sp.salesperson_sk
+join
+    dim_stores st 
+    on sales.store_sk = st.store_sk
+group by
+    1, 2
+
+-- Step 2: Standardize
+
+-- This python code prepares the clustering features
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+
+# Calculate percentage distribution for categories
+sp_category_pct = sp_category.pivot_table(
+    index='salesperson_id', 
+    columns='category', 
+    values='category_sales', 
+    fill_value=0
+)
+sp_category_pct = sp_category_pct.div(sp_category_pct.sum(axis=1), axis=0) * 100
+sp_category_pct.columns = [f'pct_{col.lower().replace(" & ", "_").replace(" ", "_")}' for col in sp_category_pct.columns]
+
+# Calculate location concentration (Herfindahl index)
+sp_location_pct = sp_location.pivot_table(
+    index='salesperson_id',
+    columns='store_location',
+    values='location_sales',
+    fill_value=0
+)
+sp_location_pct = sp_location_pct.div(sp_location_pct.sum(axis=1), axis=0)
+location_herfindahl = (sp_location_pct ** 2).sum(axis=1) * 100
+location_herfindahl.name = 'location_concentration_index'
+
+# Calculate category concentration (Herfindahl index)
+sp_category_pct_calc = sp_category.pivot_table(
+    index='salesperson_id',
+    columns='category',
+    values='category_sales',
+    fill_value=0
+)
+sp_category_pct_calc = sp_category_pct_calc.div(sp_category_pct_calc.sum(axis=1), axis=0)
+category_herfindahl = (sp_category_pct_calc ** 2).sum(axis=1) * 100
+category_herfindahl.name = 'category_concentration_index'
+
+# Combine all features
+features = sp_base_metrics.set_index('salesperson_id').join([
+    sp_category_pct,
+    category_herfindahl,
+    location_herfindahl
+])
+
+features_for_clustering = features[[
+    'avg_revenue_per_sale',
+    'total_sales',
+    'unique_customers',
+    'num_categories',
+    'num_locations',
+    'num_campaigns',
+    'category_concentration_index',
+    'location_concentration_index'
+]].join(sp_category_pct)
+
+# Standardize features
+scaler = StandardScaler()
+features_scaled = scaler.fit_transform(features_for_clustering)
+
+# Find optimal k using elbow method
+inertias = []
+k_range = range(2, 11)
+for k in k_range:
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    kmeans.fit(features_scaled)
+    inertias.append(kmeans.inertia_)
+
+elbow_df = pd.DataFrame({'k': list(k_range), 'inertia': inertias})
+
+-- Step 3: Cluster
+
+-- This python code runs the K-means clustering
+# Run clustering with k=4 (visible elbow in C60)
+optimal_k = 4
+kmeans_final = KMeans(n_clusters=optimal_k, random_state=42, n_init=10)
+clusters = kmeans_final.fit_predict(features_scaled)
+
+# Add cluster assignments
+features['cluster'] = clusters
+
+# Create cluster profiles
+cluster_profiles = features.groupby('cluster').agg({
+    'total_sales': ['mean', 'count'],
+    'unique_customers': 'mean',
+    'avg_revenue_per_sale': 'mean',
+    'num_categories': 'mean',
+    'num_locations': 'mean',
+    'num_campaigns': 'mean',
+    'category_concentration_index': 'mean',
+    'location_concentration_index': 'mean'
+}).round(2)
+
+cluster_profiles.columns = ['_'.join(col).strip() for col in cluster_profiles.columns]
+cluster_profiles = cluster_profiles.rename(columns={'total_sales_count': 'num_salespeople'})
+
+-- Step 4: Profile clusters
+
+-- This python code profiles the clusters based on classification criteria
+# Get top categories per cluster to identify specialization
+cluster_category_profiles = features.groupby('cluster')[sp_category_pct.columns].mean()
+
+# Reset index to make cluster a column for easier viewing
+cluster_summary = cluster_profiles.reset_index()
+cluster_category_summary = cluster_category_profiles.reset_index()
+
+specialist_classification = []
+for cluster_id in range(optimal_k):
+    cluster_cats = cluster_category_summary[cluster_category_summary['cluster'] == cluster_id].iloc[0, 1:].sort_values(ascending=False)
+    top_cat = cluster_cats.index[0]
+    top_pct = cluster_cats.values[0]
+    
+    conc_idx = cluster_summary[cluster_summary['cluster'] == cluster_id]['category_concentration_index_mean'].values[0]
+    
+    if conc_idx > 30:
+        specialist_classification.append(f'Specialist ({top_cat})')
+    elif conc_idx > 20:
+        specialist_classification.append(f'Focused ({top_cat})')
+    else:
+        specialist_classification.append('Generalist')
+
+cluster_summary['type'] = specialist_classification
