@@ -8,11 +8,11 @@
   2.	Use campaign, store location, and product category concentration for each salesperson to refine areas where salespeople should focus their attention
   3.	Create a Salesperson Performance Dashboard to track performance in real-time
 
-## Business Problem
+### Business Problem
 
   We would like to examine salesperson performance and use insights to help them continuously improve. How can we guide our salespeople to focus on their strengths and develop into specialists?
 
-## Methodology 
+### Methodology 
 
   1.	SQL query that extracts, cleans, and transforms the data from the database.
     
@@ -20,7 +20,7 @@
      
   3.	A dashboard in Power BI that ranks and tracks the contribution of each location/product category for each salesperson and campaign performance.
 
-## Skills
+### Skills
 
   SQL: CTEs, Joins, Case, Window functions, Aggregate functions
   
@@ -28,7 +28,7 @@
   
   Python: Cluster Analysis (StandardScaler, KMeans)
 
-## Results and Business Recommendation
+### Results and Business Recommendation
 
   Cluster analysis of shows that salespeople are all generalists and there is no meaningful intention to specialize in areas (location, product category, etc.) where they have more success. Most salespeople perform best in their top 1-2 categories (ex. The top salesperson had 13.8% more sales in Groceries than her next highest category Clothing). Building a dashboard including sales distribution for things like location, product category, and campaign allows the company to adjust goals and redirect leads for salespeople in real-time. Given this insight, I recommend:
 
@@ -36,7 +36,7 @@
   2.	Construct teams of salespeople with similar strengths to create specialist clusters via periodic cluster analyses. With product category-based teams, the burden of product knowledge is lightened by focusing on fewer products; with location-based teams, building customer relationships is simpler.
   3.	Consult aggregate sales distribution to spot overperformers (for reward) and underperformers (for discipline).
 
-## Next Steps
+### Next Steps
 
   1.	Examine salesperson hierarchy and incentive structure to retain top performing salespeople.
   2.	Assess the competitive landscape of highest-grossing locations to decide the best areas to expand.
